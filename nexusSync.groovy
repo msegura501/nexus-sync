@@ -95,7 +95,6 @@ def fetch = { url, repository->
 
 
 		items.addAll(response.data.items)
-		println response.data.items
 		continuationToken = response.data['continuationToken']
 		if (continuationToken == null) {
 			break;
@@ -118,8 +117,9 @@ def convert = {
 def fails  = []
 repositories.each { repository ->
 	def lefts = fetch(leftUrl, repository.from).collect(convert)
-
+	println lefts
 	def rights = fetch(rightUrl, repository.to) .collect(convert)
+	println rights
 	def remains = []
 	lefts.findAll { leftItem ->
 		def matched = rights.find { rightItem ->
