@@ -167,7 +167,7 @@ repositories.each { repository ->
 				return;
 			}
 
-			def uploadUrl = "${rightUrl}/repository/${repository.to}/"
+			def uploadUrl = "${rightUrl}${repository.to}/"
 			def uploadCmd = "npm --registry ${uploadUrl} publish ${fileName}"
 			println uploadCmd
 			println uploadCmd.execute().text
