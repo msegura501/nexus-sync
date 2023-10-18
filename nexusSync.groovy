@@ -20,7 +20,7 @@ Example:
 """
 }
 
-if (args.length != 3){
+if (args.length != 5){
   printUsage();
   return;
 }
@@ -43,18 +43,10 @@ def nexusPass = args [4];
 
 if (nexusID) {
   println "Traget Nexus id ${nexusID}"
-} else {
-  println "Traget Nexus id admin"
-  def nexusID = admin
-}
-
+} 
 if (nexusPass) {
   println "Traget Nexus Pass ${nexusPass}"
-} else {
-  println "Traget Nexus Pass admin123"
-  def nexusPass = admin123
-}
-
+} 
 
 if (sourceFullUrl == targetFullUrl || ! isValidUrl(sourceFullUrl) || ! isValidUrl(targetFullUrl)){
   println "Invalid url"
@@ -103,6 +95,7 @@ def fetch = { url, repository->
 
 
 		items.addAll(response.data.items)
+		println response.data.items
 		continuationToken = response.data['continuationToken']
 		if (continuationToken == null) {
 			break;
