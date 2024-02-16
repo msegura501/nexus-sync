@@ -20,7 +20,7 @@ Example:
 """
 }
 
-if (args.length != 3){
+if (args.length != 5){
   printUsage();
   return;
 }
@@ -43,18 +43,10 @@ def nexusPass = args [4];
 
 if (nexusID) {
   println "Traget Nexus id ${nexusID}"
-} else {
-  println "Traget Nexus id admin"
-  def nexusID = admin
-}
-
+} 
 if (nexusPass) {
   println "Traget Nexus Pass ${nexusPass}"
-} else {
-  println "Traget Nexus Pass admin123"
-  def nexusPass = admin123
-}
-
+} 
 
 if (sourceFullUrl == targetFullUrl || ! isValidUrl(sourceFullUrl) || ! isValidUrl(targetFullUrl)){
   println "Invalid url"
@@ -125,8 +117,9 @@ def convert = {
 def fails  = []
 repositories.each { repository ->
 	def lefts = fetch(leftUrl, repository.from).collect(convert)
-
+	println lefts
 	def rights = fetch(rightUrl, repository.to) .collect(convert)
+	println rights
 	def remains = []
 	lefts.findAll { leftItem ->
 		def matched = rights.find { rightItem ->
@@ -174,7 +167,7 @@ repositories.each { repository ->
 				return;
 			}
 
-			def uploadUrl = "${rightUrl}/repository/${repository.to}/"
+			def uploadUrl = "${rightUrl}${repository.to}/"
 			def uploadCmd = "npm --registry ${uploadUrl} publish ${fileName}"
 			println uploadCmd
 			println uploadCmd.execute().text
