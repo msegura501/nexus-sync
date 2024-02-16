@@ -76,6 +76,8 @@ def fetch = { url, repository->
 	def context = url.substring(url.lastIndexOf('/'))
 
 	def restClient = new RESTClient(url)
+	restClient.ignoreSSLIssues()
+
 	def continuationToken = null ;
 	def items = []
 	def path = "${context}/service/rest/v1/assets".replace('//','/').replace('//','/').replace('//','/')
@@ -136,8 +138,9 @@ repositories.each { repository ->
 		println "Mismtached: ${it}"
 
 		def fileName =  "${it.downloadUrl.substring(it.downloadUrl.lastIndexOf('/')+1)}";
-		def downloadCmd = "curl ${it.downloadUrl} --output ${it.downloadUrl.substring(it.downloadUrl.lastIndexOf('/')+1)}"
-		if (repository.type == 'maven'){
+		def downloadCmd = "curl --insecure ${it.downloadUrl} -s --retry 12 --retry-connrefused --output ${it.downloadUrl.substring(it.downloadUrl.lastIndexOf('/')+1)}"
+		
+		if (repository.type == 'maven' || repository.type == 'yum'){
 			println downloadCmd
 			println downloadCmd.execute().text
 
@@ -153,7 +156,7 @@ repositories.each { repository ->
 			def rightPath = "/repository/${repository.to}/"
 
 			def uploadUrl = "${rightUrl}/${rightPath[1..-1]}${subpath}"
-			def uploadCmd = "curl -v -u ${nexusID}:${nexusPass} --upload-file ${fileName} ${uploadUrl}"
+			def uploadCmd = "curl -v -u ${nexusID}:${nexusPass} --insecure --retry 12 --retry-connrefused --upload-file ${fileName} ${uploadUrl}"
 			println uploadCmd
 			println uploadCmd.execute().text
 		}
