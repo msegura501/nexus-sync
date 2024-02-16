@@ -11,11 +11,11 @@ def printUsage(){
   type:      		maven or npm
   sourceUrl: 		sync source. must end with '/'
   toUrl:     		sync target. must end with '/'
-  TargetNexusID:	traget Nexus ID Default admin. Optional
-  TargetNexusPass:	traget Nexus ID Default admin. Optional
+  TargetNexusID:	target Nexus ID Default admin. Optional
+  TargetNexusPass:	target Nexus ID Default admin. Optional
 
 Example:
-  groovy nexusSync.groovy maven http://localhost:8081/nexus/maven-public/ http://my-private-nexus.com/nexus/private_repository/ admin admin123
+  groovy nexusSync.groovy maven http://localhost:8081/nexus/maven-public/ http://my-private-nexus.com/nexus/private_repository/ admin password
   
 """
 }
@@ -26,7 +26,7 @@ if (args.length != 5){
 }
 
 def type = args[0];
-if ('maven' != type && 'npm' != type){
+if ('maven' != type && 'npm' != type && 'yum' != type){
   printUsage();
   return;
 }
@@ -42,10 +42,10 @@ def nexusID = args [3];
 def nexusPass = args [4];
 
 if (nexusID) {
-  println "Traget Nexus id ${nexusID}"
+  println "Target Nexus ID : ${nexusID}"
 } 
 if (nexusPass) {
-  println "Traget Nexus Pass ${nexusPass}"
+  println "Target Nexus Password : ${nexusPass}"
 } 
 
 if (sourceFullUrl == targetFullUrl || ! isValidUrl(sourceFullUrl) || ! isValidUrl(targetFullUrl)){
@@ -55,19 +55,16 @@ if (sourceFullUrl == targetFullUrl || ! isValidUrl(sourceFullUrl) || ! isValidUr
 }
 
 def sourceRepository = sourceFullUrl.split('/')[-1]
-def targetRpository = targetFullUrl.split('/')[-1]
+def targetRepository = targetFullUrl.split('/')[-1]
 
 def leftUrl = sourceFullUrl[0..(sourceFullUrl.lastIndexOf(sourceRepository)-1)]
-def rightUrl = targetFullUrl[0..(targetFullUrl.lastIndexOf(targetRpository)-1)]
+def rightUrl = targetFullUrl[0..(targetFullUrl.lastIndexOf(targetRepository)-1)]
 
-
-
-println "Source Url: ${leftUrl} Repository: ${sourceRepository}"
-println "Target Url: ${rightUrl} Repository: ${targetRpository}"
+println "Source Url: ${leftUrl}${sourceRepository}"
+println "Target Url: ${rightUrl}${targetRepository}"
 
 def repositories = [
-	[from:sourceRepository, to:targetRpository, type: type],
-
+	[from:sourceRepository, to:targetRepository, type: type],
 ]
 
 
@@ -135,7 +132,8 @@ repositories.each { repository ->
 
 
 	remains.each {
-		println "Mismtached: ${it}"
+	
+		println "Mismatched: ${it}"
 
 		def fileName =  "${it.downloadUrl.substring(it.downloadUrl.lastIndexOf('/')+1)}";
 		def downloadCmd = "curl --insecure ${it.downloadUrl} -s --retry 12 --retry-connrefused --output ${it.downloadUrl.substring(it.downloadUrl.lastIndexOf('/')+1)}"
@@ -153,12 +151,14 @@ repositories.each { repository ->
 			def leftPath = "/repository/${repository.from}/"
 			def subpath = it.downloadUrl.substring(it.downloadUrl.indexOf(leftPath)+leftPath.length());
 
-			def rightPath = "/repository/${repository.to}/"
-
-			def uploadUrl = "${rightUrl}/${rightPath[1..-1]}${subpath}"
-			def uploadCmd = "curl -v -u ${nexusID}:${nexusPass} --insecure --retry 12 --retry-connrefused --upload-file ${fileName} ${uploadUrl}"
+			def uploadUrl = "${rightUrl}${repository.to}/${subpath}"
+			def uploadCmd = "curl --insecure -s -u ${nexusID}:${nexusPass} --retry 12 --retry-connrefused --upload-file ${fileName} ${uploadUrl}"
 			println uploadCmd
 			println uploadCmd.execute().text
+			
+			def rmCmd = "rm -f ${fileName}"
+			println rmCmd
+			println rmCmd.execute().text
 		}
 		else if (repository.type == 'npm' && fileName.endsWith("gz")){
 			println downloadCmd
@@ -174,6 +174,10 @@ repositories.each { repository ->
 			def uploadCmd = "npm --registry ${uploadUrl} publish ${fileName}"
 			println uploadCmd
 			println uploadCmd.execute().text
+			
+			def rmCmd = "rm -f ${fileName}"
+			println rmCmd
+			println rmCmd.execute().text
 		}
 
 
